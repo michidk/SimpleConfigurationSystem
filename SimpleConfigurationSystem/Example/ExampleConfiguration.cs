@@ -1,6 +1,6 @@
 ﻿namespace SimpleConfigurationSystem.Example
 {
-    public class ExampleConfiguration : Configuration
+    public class ExampleConfiguration : Configuration<ExampleConfiguration>
     {
 
         public bool ExampleBool { get; set; }

@@ -5,7 +5,7 @@ using YamlDotNet.Serialization;
 
 namespace SimpleConfigurationSystem
 {
-    public abstract class Configuration
+    public abstract class Configuration<T> where T : Configuration<T>
     {
         [YamlIgnore]
         public string FilePath { get; }
@@ -30,7 +30,7 @@ namespace SimpleConfigurationSystem
             
         }
 
-        public void Write()
+        public void Save()
         {
             var serizalizer = new Serializer();
             try
@@ -46,12 +46,11 @@ namespace SimpleConfigurationSystem
             }
         }
 
-        public void Read<T>() where T : Configuration
+        public void Load()
         {
             var deserializer = new Deserializer();
             string input = "";
             T cfg;
-
             try
             {
                 input = File.ReadAllText(FilePath);
@@ -86,7 +85,7 @@ namespace SimpleConfigurationSystem
             }
         }
 
-        public static LoadedConfigurationResult<T> LoadConfig<T>(string filePath, bool logToConsole = false) where T : Configuration
+        public static LoadedConfigurationResult<T> LoadConfig<T>(string filePath, bool logToConsole = false) where T : Configuration<T>
         {
             var result = new LoadedConfigurationResult<T>();
             T cfg = Activator.CreateInstance<T>();
@@ -96,7 +95,7 @@ namespace SimpleConfigurationSystem
                 LogToConsole(filePath + " doesn't exist. Creating default one. Enter your login data and restart.", logToConsole);
 
                 cfg.LoadDefaults();
-                cfg.Write();
+                cfg.Save();
 
                 LogToConsole("Default " + cfg.Name + " created.", logToConsole);
 
@@ -106,7 +105,7 @@ namespace SimpleConfigurationSystem
             {
                 LogToConsole("Loading " + cfg.Name + "...", logToConsole);
 
-                cfg.Read<T>();
+                cfg.Load();
             }
 
             result.Configuration = cfg;
