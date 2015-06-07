@@ -1,6 +1,6 @@
 ﻿namespace SimpleConfigurationSystem
 {
-    public class LoadedConfigurationResult<T>
+    public class LoadedConfigurationResult<T> where T : Configuration<T>
     {
         public T Configuration { get; protected internal set; }
         public LoadedConfigurationAction Action { get; protected internal set; }

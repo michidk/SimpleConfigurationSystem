@@ -1,10 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using YamlDotNet.Serialization;
 
 namespace SimpleConfigurationSystem
 {
+    public delegate void Log(string message);
+
     public abstract class Configuration<T> where T : Configuration<T>
     {
         [YamlIgnore]
@@ -27,7 +30,6 @@ namespace SimpleConfigurationSystem
             {
                 throw new ConfigurationException("Couldn't acces file", FilePath, e);
             }
-            
         }
 
         public void Save()
@@ -48,7 +50,7 @@ namespace SimpleConfigurationSystem
 
         public void Load()
         {
-            var deserializer = new Deserializer();
+            var deserializer = new Deserializer(ignoreUnmatched: true);
             string input = "";
             T cfg;
             try
@@ -77,35 +79,39 @@ namespace SimpleConfigurationSystem
             foreach (var prop in typeof(T).GetProperties())
             {
                 var val = prop.GetValue(cfg);
+                /* we want no warning here.. just assign null
                 if (val == null)
                 {
                     throw new ConfigurationException("Value of property " + prop.Name + " is Null", Name);
                 }
-                prop.SetValue(this, val);
+                */
+                if (prop.CanWrite)
+                    prop.SetValue(this, val);
             }
         }
 
-        public static LoadedConfigurationResult<T> LoadConfig<T>(string filePath, bool logToConsole = false) where T : Configuration<T>
+        public static LoadedConfigurationResult<T> LoadConfig(string filePath, Log log = null)
         {
             var result = new LoadedConfigurationResult<T>();
             T cfg = Activator.CreateInstance<T>();
 
             if (!cfg.Exists())
             {
-                LogToConsole(filePath + " doesn't exist. Creating default one. Enter your login data and restart.", logToConsole);
-
+                log?.Invoke(filePath + " doesn't exist. Creating default one.");
                 cfg.LoadDefaults();
                 cfg.Save();
 
-                LogToConsole("Default " + cfg.Name + " created.", logToConsole);
+                log?.Invoke("Default " + cfg.Name + " created.");
 
                 result.Action = LoadedConfigurationAction.CreatedDefault;
             }
             else
             {
-                LogToConsole("Loading " + cfg.Name + "...", logToConsole);
+                log?.Invoke("Loading " + cfg.Name + "...");
 
                 cfg.Load();
+
+                result.Action = LoadedConfigurationAction.Loaded;
             }
 
             result.Configuration = cfg;
@@ -139,11 +145,6 @@ namespace SimpleConfigurationSystem
             {
                 throw new ConfigurationException("Coudn't access and delete file", Name, e);
             }
-        }
-
-        public static void LogToConsole(string msg, bool log)
-        {
-            if (log) Console.WriteLine(msg);
         }
     }
 }
