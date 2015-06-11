@@ -28,7 +28,7 @@ namespace SimpleConfigurationSystem
             }
             catch (Exception e)
             {
-                throw new ConfigurationException("Couldn't acces file", FilePath, e);
+                throw new ConfigurationException("Couldn't access file", FilePath, e);
             }
         }
 
@@ -90,14 +90,14 @@ namespace SimpleConfigurationSystem
             }
         }
 
-        public static LoadedConfigurationResult<T> LoadConfig(string filePath, Log log = null)
+        public static LoadedConfigurationResult<T> LoadConfig(Log log = null)
         {
             var result = new LoadedConfigurationResult<T>();
             T cfg = Activator.CreateInstance<T>();
 
             if (!cfg.Exists())
             {
-                log?.Invoke(filePath + " doesn't exist. Creating default one.");
+                log?.Invoke(cfg.FilePath + " doesn't exist. Creating default one.");
                 cfg.LoadDefaults();
                 cfg.Save();
 
